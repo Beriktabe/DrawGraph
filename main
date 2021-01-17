@@ -1,0 +1,138 @@
+program gr;
+uses
+  graph,
+  wincrt,
+  sysutils;
+
+var
+  i, gd, gm, midPy, midPx: integer;
+  ch: char;
+  sizeX: integer = 5;
+  sizeY: integer = 5;
+  x0: real = -8.5;//введи левый предел
+  xn: real = 5.5;//введи правый предел
+procedure drawMenuInfo();
+begin
+SetColor(white);
+outTextXY(1200, 600, 'left arrow - zoom in on the x-axis');
+outTextXY(1200, 620, 'right arrow - zoom out on the x-axis');
+outTextXY(1200, 640, 'up arrow - zoom in on the y-axis');
+outTextXY(1200, 660, 'down arrow - zoom out on the y-axis');
+outTextXY(1200, 680, 'z - zoom in');
+outTextXY(1200, 700, 'x - zoom out');
+outTextXY(1200, 720, 'Home - close');
+end;
+function f(x:real):real;
+begin
+  f:=2*x*x*x - x*x + 3*x + 1;
+end;
+
+procedure drawf();
+var
+  x, y, k:longint;
+  first, lBorder, rBorder: boolean;
+begin
+  SetColor(Blue);
+  first:=true;
+  lBorder := False;
+  rBorder := False;
+  if x0/sizeX < -9 then
+    begin
+    x0 := -9*sizeX;
+    lBorder := True;
+    end;
+    if xn/sizeX > 9 then
+    begin
+    xn := 9*sizeX;
+    rBorder := true;
+    end;
+  SetColor(Red);
+
+  for x:=round(x0*64) to round(xn*64) do
+  begin
+   y:=round(f(x/64)*32 / sizeY);
+   if (y >= -9*32) and (y<= 9*32) then
+      if first then
+      begin
+        Moveto(midPx + x div SizeX + 1, midPy - y);
+        first:=false
+      end
+      else
+      begin
+      Lineto(midPx + x div SizeX, midPy - y);
+      if y > 0 then Line(midPx + x div SizeX, midPy - y, midPx + x div SizeX, midPy - 1);
+      end
+   else
+   begin
+   first:=true;
+   if (y >= 0) and (x/64 <= xn) then Line(midPx + x div SizeX, midPy - 9*32, midPx + x div SizeX, midPy - 1);
+   end;
+  end;
+
+  SetColor(yellow);
+  if lBorder <> True then Line(midPx + round(x0*64/sizeX), midPy - 9*32, midPx + round(x0*64/sizeX), midPy);
+  if rBorder <> True then Line(midPx + round(xn*64/sizeX), midPy - 9*32, midPx + round(xn*64/sizeX), midPy);
+end;
+
+//----------------------
+procedure draw();
+var
+  i: integer;
+begin
+SetColor(white);
+line(midPx - 64*9 - 4, midPy, midPx + 64*9 + 4, midPy);
+line(midPx, midPy - 64*9 div 2 - 4, midPx, midPy + 64*9 div 2 + 4);
+for i:= -1 * 9 to 9 do
+  begin
+  line(midPx + i*64, midPy + 3, midPx + i*64, midPy - 3);
+  if i <> 0 then
+    outTextXY(midPx + i*64, midPy + 16, IntToStr(i * sizeX))
+  else
+    outTextXY(midPx + i*64 + 10, midPy + 16, '0');
+  end;
+outTextXY(midPx + 9*64 + 15, midPy, 'X');
+for i:= -1 * 9 to 9 do
+  begin
+  line(midPx + 3, midPy - i*64 div 2, midPx - 3, midPy - i*64 div 2);
+  if i <> 0 then
+    outTextXY(midPx - 15, midPy - i*64 div 2, IntToStr(i * sizeY));
+  end;
+outTextXY(midPx, midPy - 10*64 div 2 + 15, 'Y');
+end;
+
+begin
+gd:=detect;
+initGraph(gd,gm,'');
+SetTextJustify(CenterText, CenterText);
+
+midPx := getMaxX div 2;
+midPy := getMaxY div 2;
+while True do
+begin
+  drawf();
+  draw();
+  drawMenuInfo();
+  ch := readkey;
+  case ch of
+    #75: if sizeX - 1 > 0 then sizeX := sizeX - 1;
+    #77: sizeX := sizeX + 1;
+    #80: if sizeY - 1 > 0 then sizeY := sizeY - 1;
+    #72: sizeY := sizeY + 1;
+    'z': begin
+         if (sizeX - 1 > 0) and (sizeY - 1 > 0) then
+           begin
+           sizeX := sizeX - 1;
+           sizeY := sizeY - 1;
+           end;
+         end;
+    'x': begin
+         sizeX := sizeX + 1;
+         sizeY := sizeY + 1;
+         end;
+    #71: closeGraph;
+  end;
+  ClearDevice;
+end;
+
+
+end.
